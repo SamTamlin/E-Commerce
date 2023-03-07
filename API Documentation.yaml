@@ -6,7 +6,7 @@ info:
   description: "A Codecadamy project: E-Commerce App (REST API)"
 
 paths:
-  /account:
+  /account/register:
     post:
       summary: Create a new user account
       description: >-
@@ -18,6 +18,9 @@ paths:
             schema:
               type: object
               properties:
+                username:
+                  type: string
+                  example: ausername
                 email:
                   type: string
                   example: random@email.com
@@ -39,10 +42,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  id:
-                    type: integer
-                    format: int64
-                    example: 11
+                  usesname:
+                    type: string
+                    example: ausername
                   email:
                     type: string
                     example: random@email.com
@@ -56,19 +58,21 @@ paths:
                     type: string
                     example: 'Id2OLpArBbpb'
         409:
-          description: 409 Confilct email already exists
+          description: 409 Confilct username or email already exists
           content:
             application/json:
               schema:
                 type: object
                 properties:
+                  username:
+                    type: string
+                    example: ausername
                   email:
                     type: string
                     example: 'vrosenhaus0@miibeian.gov.cn'
   /account/login:
     post:
       summary: Login to a user account
-      description: ''
       requestBody:
         required: true
         content:
@@ -76,9 +80,9 @@ paths:
             schema:
               type: object
               properties:
-                email:
+                username:
                   type: string
-                  example: random@email.com
+                  example: ausername
                 password:
                   type: string
                   example: Id2OLpArBbpb
@@ -88,16 +92,16 @@ paths:
           description: 200 Success
         401:
           description: 401 Unauthorized
-  /account/{id}:
+  /account/{username}:
     get:
-      summary: Retreive account information using account ID
+      summary: Retreive account information by username
       parameters:
-        - name: id
+        - name: username
           in: path
           required: true
           schema:
-            type: integer
-          example: 11
+            type: string
+            example: ausername
       operationId: get_account_info
       responses:
         200:
@@ -107,10 +111,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  id:
-                    type: integer
-                    format: int64
-                    example: 11
+                  username:
+                    type: string
+                    example: ausername
                   email:
                     type: string
                     example: random@email.com
@@ -124,16 +127,16 @@ paths:
                     type: string
                     example: Id2OLpArBbpb
         401:
-          description: 401 Unaithorized
+          description: 401 Unauthorized
     put:
-      summary: Edit account details using account ID
+      summary: Edit account details using username
       parameters:
-        - name: id
+        - name: username
           in: path
           required: true
           schema:
-            type: integer
-          example: 11
+            type: string
+            example: ausername
       requestBody:
         required: true
         content:
@@ -141,6 +144,9 @@ paths:
             schema:
               type: object
               properties:
+                username:
+                  type: string
+                  example: ausername
                 email:
                   type: string
                   example: random@email.com
@@ -150,7 +156,9 @@ paths:
                 last_name:
                   type: string
                   example: Doe
-
+                password:
+                  type: string
+                  example: Id2OLpArBbpb
       operationId: edit_account_info
       responses:
         200:
@@ -160,10 +168,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  id:
-                    type: integer
-                    format: int64
-                    example: 11
+                  username:
+                    type: string
+                    example: ausername
                   email:
                     type: string
                     example: random@email.com
@@ -177,15 +184,14 @@ paths:
                     type: string
                     example: Id2OLpArBbpb
     delete:
-      summary: Delete account using account ID
-      description: ''
+      summary: Delete account using username
       parameters:
-        - name: id
+        - name: username
           in: path
           required: true
           schema:
-            type: integer
-          example: 11
+            type: string
+            example: ausername
       operationId: delete_account
       responses:
         204:
@@ -200,10 +206,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ArrayOfProducts'
+    post:
+      summary: Create a new product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 41
+                name:
+                  type: string
+                  example: Lemonade
+                price: 
+                  type: integer
+                  example: 1.29
+      operationId: 'create_product'
+      responses:
+        201:
+          description: 201 Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 41
+                  name:
+                    type: string
+                    example: Lemonade
+                  price: 
+                    type: integer
+                    example: 1.29
   /product/{id}:
     get:
       summary: Retreive a product using product ID
-
       parameters:
         - name: id
           in: path
@@ -231,6 +272,60 @@ paths:
                     example: 2.43
         404:
           description: 404 Not Found
+    put:
+      summary: Edit product name or price
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 22
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Cream Soda
+                price: 
+                  type: integer
+                  example: 1.09
+      operationId: 'edit_product_info'
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 22
+                  name:
+                    type: string
+                    example: Cream Soda
+                  price:
+                    type: integer
+                    example: 1.09
+      
+    delete:
+      summary: Delete product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 22
+      operationId: 'delete_product'
+      responses:
+        204:
+          description: 204 No Content
   /account/order/{id}:
     get:
       summary: Retreive list of orders using user ID
