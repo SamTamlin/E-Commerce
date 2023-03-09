@@ -34,12 +34,12 @@ passport.use(new LocalStrategy(
 
 // Stores username
 passport.serializeUser((user, done) => {
-  // console.log(`serailized user ${user.rows[0].username}`);
-  done(null, user.rows[0].username);
+  // console.log(user);
+  done(null, user);
 });
-passport.deserializeUser((username, done) => {
-  // console.log(`deserialized user ${username}`);
-  done(null, username);
+passport.deserializeUser((rows, done) => {
+  // console.log(`deserialized user ${rows.user}`);
+  done(null, rows);
 });
 
 
@@ -76,11 +76,13 @@ app.put('/product/:id', db.updateProduct);
 app.delete('/product/:id', db.deleteProduct);
 
 // order routes
-app.get('/account/order/:username');
-app.post('/account/order/:username');
-app.get('/account/order/:username/:orderId');
-app.put('/account/order/:username/:orderId');
-app.delete('/account/order/:username/:orderId');
+app.get('/account/order', db.getUserOrders);
+app.post('/account/order/', db.createNewOrder);
+app.get('/account/order/:orderId', db.getOrder);
+app.put('/account/order/edit/:orderId', db.editOrderQty);
+app.put('/account/order/add/:orderId', db.addOrderProduct);
+app.put('/account/order/checkout/:orderId', db.checkoutOrder);
+app.delete('/account/order/:orderId', db.deleteOrder);
 
 
 

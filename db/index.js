@@ -8,18 +8,22 @@ const pool = new Pool({
     port: process.env.PGPORT
 });
 
+
 // LocalStratagy Helper
 const getUsernamePassword = (username, password, cb) => {
     pool.query(
-        'SELECT username, password FROM user_account WHERE username = $1',
+        'SELECT username, id, password FROM user_account WHERE username = $1',
         [username],
         function(error, user) {
             if(error) {return cb(error)}
-            if(!user) {return cb(null, false, {message: 'username does not exist'})}
-            if (password != user.rows[0].password) {
+            if(!user.rows[0]) {return cb(null, false, {message: 'user does not exist'})}
+            if(user.rows[0].password != password) {
                 return cb(null, false, {message: 'incorrect password'})
             }
-            return cb(null, user);
+            const username = user.rows[0].username;
+            const id = user.rows[0].id;
+            const info = {username, id};
+            return cb(null, info);
         }
     )
 };
@@ -27,15 +31,19 @@ const getUsernamePassword = (username, password, cb) => {
 
 // user_account
 const getUser = (req, res) => {
-    const username = req.session.passport.user;
+    const {username} = req.session.passport.user;
     pool.query(
         'SELECT * FROM user_account WHERE username = $1',
         [username],
         (error, results) => {
             if(error) {
-                throw error
+                console.log('oops!')
+            } else if (results.rows.length < 1) {
+                res.status(404).send(`Username ${username} does not exist`)
             }
-            res.status(200).json(results.rows)
+            if(results.rows[0].username === username) {
+                res.status(200).json(results.rows)
+            }
         }
     );
 };
@@ -57,7 +65,7 @@ const createUser = (req, res) => {
 };
 
 const updateUser = (req, res) => {
-    const username = req.session.passport.user;
+    const {username} = req.session.passport.user;
     const {email, first_name, last_name, password} = req.body;
     pool.query(
         'UPDATE user_account SET email = $1, first_name = $2, last_name = $3, password = $4 WHERE username = $5 RETURNING *',
@@ -71,14 +79,14 @@ const updateUser = (req, res) => {
             } else if (Array.isArray(results.rows) && results.rows.length < 1) {
                 res.status(404).send('User not found');
             } else {
-                res.status(200).json(results.rows)
+                res.status(200).json(results.rows[0])
             }
         }
     )
 };
 
 const deleteUser = (req, res) => {
-    const username = req.session.passport.user;
+    const {username} = req.session.passport.user;
     pool.query(
         'DELETE FROM user_account WHERE username = $1',
         [username],
@@ -86,10 +94,11 @@ const deleteUser = (req, res) => {
             if(error) {
                 throw error
             }
-            res.status(204).send('No content')
+            res.status(204).send('No Content')
         }
     )
 };
+
 
 // product
 const getProducts = (req, res) => {
@@ -122,7 +131,7 @@ const createProduct = (req, res) => {
                 [name],
                 (error, results) => {
                     if(error) {throw error}
-                    res.status(201).json(results.rows)
+                    res.status(201).json(results.rows[0])
                 }
             )
         }
@@ -139,7 +148,7 @@ const getProduct = (req, res) => {
             if(results.rows < 1) {
                 res.status(404).send(`Product with an id of ${id} does not exist.`)
             } else {
-                res.status(200).json(results.rows)
+                res.status(200).json(results.rows[0])
             }
         }
     )
@@ -158,7 +167,7 @@ const updateProduct = (req, res) => {
             } else if (Array.isArray(results.rows) && results.rows.length < 1) {
                 res.status(404).send('Product not found');
             } else {
-                res.status(200).json(results.rows)
+                res.status(200).json(results.rows[0])
             }
         }
     )
@@ -176,6 +185,174 @@ const deleteProduct = (req, res) => {
     )
 };
 
+
+// order
+const getUserOrders = (req, res) => {
+    const {username} = req.session.passport.user;
+    pool.query(
+        'SELECT\
+            customer_order.id as order_id,\
+            SUM(product_order.quantity * product.price) AS basket_total,\
+            customer_order.transaction_complete AS payment_received\
+        FROM customer_order\
+        JOIN product_order\
+            ON customer_order.id = product_order.customer_order_id\
+        JOIN product\
+            ON product_order.product_id = product.id\
+        JOIN user_account\
+            ON customer_order.user_account_id = user_account.id\
+        WHERE user_account.username = $1\
+        GROUP BY customer_order.id;',
+        [username],
+        (error, results) => {
+            if(error) {throw error}
+            res.status(200).json(results.rows)
+        }
+    )
+};
+
+const createNewOrder = (req, res) => {
+    const {id} = req.session.passport.user;
+    pool.query(
+        'INSERT INTO customer_order (user_account_id, transaction_complete)\
+        VALUES ($1, false)\
+        RETURNING\
+            id AS order_id,\
+            transaction_complete',
+        [id],
+        (error, results) => {
+            if(error) {throw error}
+            res.status(200).json(results.rows)
+        }
+    )
+};
+
+const getOrder = (req, res) => {
+    const {orderId} = req.params;
+    pool.query(
+        'SELECT\
+            product_order.customer_order_id AS order_id,\
+            product.id AS product_id,\
+            product.name AS product_name,\
+            product.price AS price,\
+            product_order.quantity AS quantity,\
+            SUM(product_order.quantity * product.price) AS product_total,\
+            customer_order.transaction_complete AS transaction_complete\
+        FROM product_order\
+        JOIN product\
+            ON product_order.product_id = product.id\
+        JOIN customer_order\
+            ON product_order.customer_order_id = customer_order.id\
+        WHERE customer_order_id = $1\
+        GROUP BY (\
+            product_order.customer_order_id,\
+            product.id,\
+            product.name,\
+            product.price,\
+            product_order.quantity,\
+            customer_order.transaction_complete\
+        )\
+        ORDER BY product_name ASC',
+        [orderId],
+        (error, results) => {
+            if(error) {throw error}
+            res.status(200).json(results.rows)
+        }
+    )
+};
+
+const editOrderQty = (req, res) => {
+    const {orderId} = req.params;
+    const {product_id, quantity} = req.body;
+    pool.query(
+        'UPDATE product_order\
+        SET quantity = $1\
+        WHERE customer_order_id = $2 AND product_id = $3;',
+        [quantity, orderId, product_id],
+        (error, results) => {
+            if(error) {throw error}
+            res.status(200).redirect(`/account/order/${orderId}`)
+        }
+    )
+    // pool.query(
+    //     'SELECT\
+    //         product_order.customer_order_id AS order_id,\
+    //         product.id AS product_id,\
+    //         product.name AS product_name,\
+    //         product.price AS price,\
+    //         product_order.quantity AS quantity,\
+    //         SUM(product_order.quantity * product.price) AS product_total,\
+    //         customer_order.transaction_complete AS transaction_complete\
+    //     FROM product_order\
+    //     JOIN product\
+    //         ON product_order.product_id = product.id\
+    //     JOIN customer_order\
+    //         ON product_order.customer_order_id = customer_order.id\
+    //     WHERE customer_order_id = $1\
+    //     GROUP BY (\
+    //         product_order.customer_order_id,\
+    //         product.id,\
+    //         product.name,\
+    //         product.price,\
+    //         product_order.quantity,\
+    //         customer_order.transaction_complete\
+    //     )\
+    //     ORDER BY product_name ASC;',
+    //     [orderId],
+    //     (error, results) => {
+    //         if(error) {throw error}
+    //         res.status(200).json(results.rows)
+    //     }
+    // )
+};
+
+const addOrderProduct = (req, res) => {
+    const {orderId} = req.params;
+    const {product_id, quantity} = req.body;
+    pool.query(
+        'INSERT INTO product_order\
+        VALUES($1, $2, $3);',
+        [orderId, product_id, quantity],
+        (error, results) => {
+            if(error) {throw error}
+            res.status(200).redirect(`/account/order/${orderId}`)
+        }
+    )
+};
+
+const checkoutOrder = (req, res) => {
+    const {id} = req.session.passport.user;
+    const {orderId} = req.parms;
+    pool.query(
+        'UPDATE customer_order\
+        SET transaction_complete = true\
+        WHERE id = $1 AND user_account_id = $2\
+        RETURNING\
+            id AS order_id,\
+            transation_complete;',
+        [orderId, id],
+        (error, results) => {
+            if(error) {throw error}
+            res.status(200).send(results.rows);
+        }
+    )
+};
+
+const deleteOrder = (req, res) => {
+    const {id} = req.session.passport.user;
+    const {orderId} = req.params;
+    pool.query(
+        'DELETE FROM customer_order\
+        WHERE id = $1 AND user_account_id = $2\
+        RETURNING *',
+        [orderId, id],
+        (error, results) => {
+            if(error) {throw error}
+            res.status(204).send(results.rows);
+        }
+    )
+}
+
 module.exports = {
     // Local Stratagy helper
     getUsernamePassword,
@@ -190,4 +367,12 @@ module.exports = {
     getProduct,
     updateProduct,
     deleteProduct,
+    //order
+    getUserOrders,
+    createNewOrder,
+    getOrder,
+    editOrderQty,
+    addOrderProduct,
+    checkoutOrder,
+    deleteOrder,
 };
