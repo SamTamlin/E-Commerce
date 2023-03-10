@@ -30,9 +30,6 @@ paths:
                 last_name:
                   type: string
                   example: Smith
-                password:
-                  type: string
-                  example: Id2OLpArBbpb
       operationId: create_user_account
       responses:
         201:
@@ -42,7 +39,10 @@ paths:
               schema:
                 type: object
                 properties:
-                  usesname:
+                  id:
+                    type: integer
+                    example: 11
+                  username:
                     type: string
                     example: ausername
                   email:
@@ -57,19 +57,6 @@ paths:
                   password':
                     type: string
                     example: 'Id2OLpArBbpb'
-        409:
-          description: 409 Confilct username or email already exists
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  username:
-                    type: string
-                    example: ausername
-                  email:
-                    type: string
-                    example: 'vrosenhaus0@miibeian.gov.cn'
   /account/login:
     post:
       summary: Login to a user account
@@ -89,19 +76,17 @@ paths:
       operationId: log_in
       responses:
         200:
-          description: 200 Success
-        401:
-          description: 401 Unauthorized
-  /account/{username}:
+          description: 200 Success - Redirects to /account/
+        409:
+          description: 409 Conflict
+          content:
+            string:
+              schema:
+                type: string
+                example: 'The username ausername already exists, please login'
+  /account:
     get:
-      summary: Retreive account information by username
-      parameters:
-        - name: username
-          in: path
-          required: true
-          schema:
-            type: string
-            example: ausername
+      summary: Retreive account information
       operationId: get_account_info
       responses:
         200:
@@ -111,6 +96,9 @@ paths:
               schema:
                 type: object
                 properties:
+                  id:
+                    type: integer
+                    example: 11
                   username:
                     type: string
                     example: ausername
@@ -123,20 +111,15 @@ paths:
                   last_name:
                     type: string
                     example: Smith
-                  password':
-                    type: string
-                    example: Id2OLpArBbpb
         401:
           description: 401 Unauthorized
+          content:
+            string:
+              schema:
+                type: string
+                example: 'Unauthorized: Please log in to view your account information'
     put:
-      summary: Edit account details using username
-      parameters:
-        - name: username
-          in: path
-          required: true
-          schema:
-            type: string
-            example: ausername
+      summary: Edit account details
       requestBody:
         required: true
         content:
@@ -144,9 +127,6 @@ paths:
             schema:
               type: object
               properties:
-                username:
-                  type: string
-                  example: ausername
                 email:
                   type: string
                   example: random@email.com
@@ -168,6 +148,9 @@ paths:
               schema:
                 type: object
                 properties:
+                  id:
+                    type: integer
+                    example: 11
                   username:
                     type: string
                     example: ausername
@@ -180,22 +163,26 @@ paths:
                   last_name:
                     type: string
                     example: Doe
-                  password':
-                    type: string
-                    example: Id2OLpArBbpb
+        401:
+          description: 401 Unauthorized
+          content:
+            string:
+              schema:
+                type: string
+                example: 'Unauthorized: Please log in to edit your account information'
     delete:
-      summary: Delete account using username
-      parameters:
-        - name: username
-          in: path
-          required: true
-          schema:
-            type: string
-            example: ausername
+      summary: Delete account
       operationId: delete_account
       responses:
         204:
-          description: 204 No content
+          description: 204 No content - Redirected to /account/login
+        401:
+          description: 401 Unauthorized
+          content:
+            string:
+              schema:
+                type: string
+                example: 'Unauthorized: You must be logged in to delete your account!'
   /product:
     get:
       summary: Retreive full list of products
@@ -215,9 +202,6 @@ paths:
             schema:
               type: object
               properties:
-                id:
-                  type: integer
-                  example: 41
                 name:
                   type: string
                   example: Lemonade
@@ -244,7 +228,7 @@ paths:
                     example: 1.29
   /product/{id}:
     get:
-      summary: Retreive a product using product ID
+      summary: Retreive product information 
       parameters:
         - name: id
           in: path
@@ -312,7 +296,6 @@ paths:
                   price:
                     type: integer
                     example: 1.09
-      
     delete:
       summary: Delete product
       parameters:
@@ -326,28 +309,10 @@ paths:
       responses:
         204:
           description: 204 No Content
-  /account/order/{id}:
+  /account/order:
     get:
-      summary: Retreive list of orders using user ID
-      description: Retreives a list of orders made by the user and shows 'order_id', 'basket_total' and 'payment_reveived'. (If 'payment_received' = false the order is considered to be in the basket).
-        # SELECT 
-        #   customer_order.id AS order_id,
-        #   SUM(product.price * product_order.quantity) AS basket_total,
-        #   customer_order.transaction_complete AS payment_received
-        # FROM customer_order
-        # JOIN product_order
-        #   ON customer_order.id = product_order.customer_order_id
-        # JOIN product
-        #   ON product_order.product_id = product.id
-        # WHERE customer_order.user_account_id = 8
-        # GROUP BY customer_order.id, customer_order.transaction_complete;
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-          example: 8
+      summary: Retreive list of orders/baskets by user
+      description: Retreives a list of orders made by the user. If 'payment_received' = false the order is considered to be in the basket.
       operationId: 'get_all_orders'
       responses:
         200:
@@ -357,28 +322,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ArrayOfOrders'
     post:
-      summary: Add new basket by user id
-      description: 'On creation of a new order the order number is recevied'
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-          example: 1
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                product_id:
-                  type: integer
-                  example: 25
-                quantity:
-                  type: integer
-                  example: 2
+      summary: Create a new basket
+      description: 'Must be logged in to create a basket'
       operationId: 'create_order'
       responses:
         200:
@@ -391,22 +336,19 @@ paths:
                   order_id:
                     type: integer
                     example: 51
-  /account/order/{id}/{order_id}:
+                  transaction_complete:
+                    type: boolean
+                    example: false
+  /account/order/{order_id}:
     get:
-      summary: Retrive order, detailing products, quantity and price using user_id and order_id
+      summary: Retrive details of a single order by item ordered by product_id
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            example: 4
         - name: order_id
           in: path
           required: true
           schema:
             type: integer
-            example: 16
+            example: 12
       operationId: get_single_order
       responses:
         200:
@@ -415,23 +357,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ArrayOfOrderItems'
-    put:
-      summary: Add/Remove products from basket and checkout using order_id
+    delete:
+      summary: Delete basket
+      description: Only baskets and not orders can be removed, if payment has been received deletion is rejected
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            example: 4
         - name: order_id
           in: path
           required: true
           schema:
             type: integer
-            example: 16
+            example: 16        
+      operationId: delete_order
+      responses:
+        204:
+          description: 204 No Content
+  /account/order/add/{order_id}:
+    put:
+      summary: Add product to basket
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 12
       requestBody:
-        description: Adding two "Cheese - Gouda" to order 16.
+        description: Adding two "Cream - Soda" to order 16.
         required: true
         content:
           application/json:
@@ -444,35 +395,71 @@ paths:
                 quantity:
                   type: integer
                   example: 2
-      operationId: edit_order
+      operationId: add_to_order
+      responses:
+        200:
+          description: 200 OK - Redirected to /account/order/{order_id}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayOfOrderItemsProductAdded'
+  /account/order/edit/{order_id}:
+    put:
+      summary: Edit product quantity in a basket
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 12
+      requestBody:
+        description: Change quantity of "Cream - Soda" from 2 to 1.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                product_id:
+                  type: integer
+                  example: 22
+                quantity: 
+                  type: integer
+                  example: 1
+      operationId: edit_order_quantity
+      responses:
+        200:
+          description: 200 OK - Redirected to /account/order/{order_id}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayOfOrderItemsQuantityChanged'
+  /account/order/checkout/{order_id}:
+    put:
+      summary: Checkout - Payment received, basket turned into order.
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 12
+      operationId: checkout_basket
       responses:
         200:
           description: 200 OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ArrayOfOrderItemsAdded'
-    delete:
-      summary: Remove basket using order_id
-      description: Only baskets can be removed, if payment_received = true deletion is rejected
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            example: 4
-        - name: order_id
-          in: path
-          required: true
-          schema:
-            type: integer
-            example: 16        
-      operationId: delete_order
-      responses:
-        204:
-          description: 204 No Content
-          
+                type: object
+                properties:
+                  order_id:
+                    type: integer
+                    example: 12
+                  transaction_complete:
+                    type: boolean
+                    example: true
 components:
   schemas:
     ArrayOfProducts:
@@ -605,86 +592,153 @@ components:
       items:
         type: object
       example:
-        - order_id: 26
-          basket_total: 10.55
+        - order_id: 12
+          basket_total: "30.76"
           payment_received: true
-        - order_id: 30
-          basket_total: 28.80
-          payment_received: true
-        - order_id: 38
-          basket_total: 15.25
+        - order_id: 31
+          basket_total: "14.96"
           payment_received: false
+        - order_id: 32
+          basket_total: "4.85"
+          payment_received: true
+        - order_id: 33
+          basket_total: "37.02"
+          payment_received: false
+        - order_id: 39
+          basket_total: "56.83"
+          payment_received: true
     ArrayOfOrderItems:
       type: array
       items:
         type: object
       example:
-        - id: 4
-          order_id: 16
-          product_name: Broccoli - Fresh
-          price: 1.18
-          quantity: 2
-          product_total: 2.36
-          payment_received: false
-        - id: 4
-          order_id: 16
-          product_name: Cheese - Pont Couvert
-          price: 4.38
-          quantity: 1
-          product_total: 4.38
-          payment_received: false
-        - id: 4
-          order_id: 16
-          product_name: Muffin Batt - Ban Dream Zero
-          price: 2.61
-          quantity: 6
-          product_total: 15.66
-          payment_received: false
-        - id: 4
-          order_id: 16
+        - order_id: 12
+          product_id: 10
+          product_name: Clams - Canned
+          price: "3.16"
+          quantity: 3
+          product_total: "9.48"
+          transaction_complete: true
+        - order_id: 12
+          product_id: 24
           product_name: Mushroom - Morels, Dry
-          price: 2.56
+          price: "2.56"
+          quantity: 5
+          product_total: "12.80"
+          transaction_complete: true
+        - order_id: 12
+          product_id: 35
+          product_name: Placemat - Scallop, White
+          price: "3.33"
           quantity: 1
-          product_total: 2.56
-          payment_received: false
-    ArrayOfOrderItemsAdded:
+          product_total: "3.33"
+          transaction_complete: true
+        - order_id: 12
+          product_id: 1
+          product_name: Turnip - White, Organic
+          price: "0.87"
+          quantity: 2
+          product_total: "1.74"
+          transaction_complete: true
+        - order_id: 12
+          product_id: 40
+          product_name: Wine - Sauvignon Blanc Oyster
+          price: "3.41"
+          quantity: 1
+          product_total: "3.41"
+          transaction_complete: true
+    ArrayOfOrderItemsProductAdded:
       type: array
       items:
         type: object
       example:
-        - id: 4
-          order_id: 16
-          product_name: Broccoli - Fresh
-          price: 1.18
+        - order_id: 12
+          product_id: 10
+          product_name: Clams - Canned
+          price: "3.16"
+          quantity: 3
+          product_total: "9.48"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 22
+          product_name: Cream - Soda
+          price: "1.09"
           quantity: 2
-          product_total: 2.36
-          payment_received: false
-        - id: 4
-          order_id: 16
-          product_name: Cheese - Pont Couvert
-          price: 4.38
-          quantity: 1
-          product_total: 4.38
-          payment_received: false
-        - id: 4
-          order_id: 16
-          product_name: Muffin Batt - Ban Dream Zero
-          price: 2.61
-          quantity: 6
-          product_total: 15.66
-          payment_received: false
-        - id: 4
-          order_id: 16
-          product_name: Mushroom - Morels, Dry
-          price: 2.56
-          quantity: 1
-          product_total: 2.56
-          payment_received: false
-        - id: 4
-          order_id: 16
-          product_name: Cheese - Gouda
-          price: 2.43
-          quantity: 2
-          product_total: 4.86
+          product_total: "2.18"
           payment_receieved: false
+        - order_id: 12
+          product_id: 24
+          product_name: Mushroom - Morels, Dry
+          price: "2.56"
+          quantity: 5
+          product_total: "12.80"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 35
+          product_name: Placemat - Scallop, White
+          price: "3.33"
+          quantity: 1
+          product_total: "3.33"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 1
+          product_name: Turnip - White, Organic
+          price: "0.87"
+          quantity: 2
+          product_total: "1.74"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 40
+          product_name: Wine - Sauvignon Blanc Oyster
+          price: "3.41"
+          quantity: 1
+          product_total: "3.41"
+          transaction_complete: false
+    ArrayOfOrderItemsQuantityChanged:
+      type: array
+      items:
+        type: object
+      example:
+        - order_id: 12
+          product_id: 10
+          product_name: Clams - Canned
+          price: "3.16"
+          quantity: 3
+          product_total: "9.48"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 22
+          product_name: Cream - Soda
+          price: "1.09"
+          quantity: 1
+          product_total: "1.09"
+          payment_receieved: false
+        - order_id: 12
+          product_id: 24
+          product_name: Mushroom - Morels, Dry
+          price: "2.56"
+          quantity: 5
+          product_total: "12.80"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 35
+          product_name: Placemat - Scallop, White
+          price: "3.33"
+          quantity: 1
+          product_total: "3.33"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 1
+          product_name: Turnip - White, Organic
+          price: "0.87"
+          quantity: 2
+          product_total: "1.74"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 40
+          product_name: Wine - Sauvignon Blanc Oyster
+          price: "3.41"
+          quantity: 1
+          product_total: "3.41"
+          transaction_complete: false
 

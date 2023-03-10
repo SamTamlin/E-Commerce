@@ -79,11 +79,10 @@ app.delete('/product/:id', db.deleteProduct);
 app.get('/account/order', db.getUserOrders);
 app.post('/account/order/', db.createNewOrder);
 app.get('/account/order/:orderId', db.getOrder);
-app.put('/account/order/edit/:orderId', db.editOrderQty);
-app.put('/account/order/add/:orderId', db.addOrderProduct);
-app.put('/account/order/checkout/:orderId', db.checkoutOrder);
 app.delete('/account/order/:orderId', db.deleteOrder);
-
+app.put('/account/order/add/:orderId', db.addOrderProduct);
+app.put('/account/order/edit/:orderId', db.editOrderQty);
+app.put('/account/order/checkout/:orderId', db.checkoutOrder);
 
 
 app.listen(port, () => {

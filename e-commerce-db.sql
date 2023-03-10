@@ -6,21 +6,21 @@ CREATE TABLE IF NOT EXISTS user_account (
     email VARCHAR(100) UNIQUE NOT NULL,
     first_name VARCHAR(50),
     last_name VARCHAR(50),
-    password VARCHAR(30) NOT NULL
+    password VARCHAR(100) NOT NULL
 );
 
 INSERT INTO user_account (username, email, first_name, last_name, password)
     VALUES
-        ('msimmank0', 'msimmank0@jalbum.net', 'Mary', 'Simmank', 'zwzovML'),
-        ('atennison1', 'atennison1@tiny.cc', 'Adriaens', 'Tennison', 'dfh0nEc'),
-        ('jhaselwood2', 'jhaselwood2@tinypic.com', 'Joye', 'Haselwood', 'FaT5CduB'),
-        ('dposten3', 'dposten3@sciencedirect.com', 'Dom', 'Posten', 'oRzK7zBvi'),
-        ('sclouston4', 'sclouston4@histats.com', 'Shelly', 'Clouston', 'FZCe60uQMYlQ'),
-        ('bswinney5', 'bswinney5@google.cn', 'Becka', 'Swinney', 'ayq4dgk9VjNB'),
-        ('pferrick6', 'pferrick6@wordpress.org', 'Philippe', 'Ferrick', 'MsALfrkQT7'),
-        ('cgrimoldby7', 'cgrimoldby7@businesswire.com', 'Chickie', 'Grimoldby', '2eORmesdRte2'),
-        ('esaphin8', 'esaphin8@google.ca', 'Elsa', 'Saphin', 'gPxD5UZm8Lxl'),
-        ('fpavese9', 'fpavese9@cmu.edu', 'Fonz', 'Pavese', '6hZMg4d08aV');
+        ('msimmank0', 'msimmank0@jalbum.net', 'Mary', 'Simmank', '$2a$10$ZfiOzJlYYzo/aC72W03BweGsAlr9RjYr8bwTXMCJC4ntNDe9FwwJW'),
+        ('atennison1', 'atennison1@tiny.cc', 'Adriaens', 'Tennison', '$2a$10$8gGing6UkQq8aQVly2Jpb.WJTrhGYkR1kyEp54/3xs/FaEastoEwq'),
+        ('jhaselwood2', 'jhaselwood2@tinypic.com', 'Joye', 'Haselwood', '$2a$10$EFFai4b0Z1gEGO0DsDDT9eZOblCnaPpRMJJmUSTUSr5XYr/8qeASO'),
+        ('dposten3', 'dposten3@sciencedirect.com', 'Dom', 'Posten', '$2a$10$N0Bsr8qE7xStq5Z5vFO1L.jX1i62UCKji6h.fan6Sewdrkr91daKu'),
+        ('sclouston4', 'sclouston4@histats.com', 'Shelly', 'Clouston', '$2a$10$0XB8hyc5YGXthR.m42JEgeWVpT1EK9D5ajrlFeiesSI4MnqtDolcW'),
+        ('bswinney5', 'bswinney5@google.cn', 'Becka', 'Swinney', '$2a$10$Aqur26dugV2AqXhfBPFyoubGqW1ZR7ybbdr0xCnhy4NuXMrZMzyi.'),
+        ('pferrick6', 'pferrick6@wordpress.org', 'Philippe', 'Ferrick', '$2a$10$n51M4Gbat3LU//Hj3Vwfz.bU3iurVG2tUtOtj6fGu5E4yPjhHXESe'),
+        ('cgrimoldby7', 'cgrimoldby7@businesswire.com', 'Chickie', 'Grimoldby', '$2a$10$hs0IxX1YxMY9KCCXKWG0qunA225olS1WcQsIrMKeOWF.Bq9oUTQTi'),
+        ('esaphin8', 'esaphin8@google.ca', 'Elsa', 'Saphin', '$2a$10$oxiMPVzOeqf0v2cj3Al.u.n6UzpMEUsNu2ZO3NZabxlnupPX.TIh6'),
+        ('fpavese9', 'fpavese9@cmu.edu', 'Fonz', 'Pavese', '$2a$10$LDPbZhP/cRqeYwB6l68TzeOoi6fYeGlPDVpDqg6Q4QMW6A8XnB8Aa');
 
 CREATE TABLE IF NOT EXISTS product (
     id SERIAL PRIMARY KEY NOT NULL,
@@ -90,7 +90,7 @@ INSERT INTO customer_order (user_account_id, transaction_complete)
         (10, true),
         (9, false),
         (2, true),
-        (1,	true),
+        (1,	false),
         (5, true),
         (2, true),
         (2, false),
