@@ -19,48 +19,49 @@ app.use(
     saveUninitialized: false,
     cookie: { 
       secure: false,
-      maxAge: 24 * 60 * 60 * 1000
+      // Session times out after one day
+      maxAge: 24 * 60 * 60 * 1000 
     }
   })
 );
 app.use(passport.initialize());
 app.use(passport.session()); // Allows persistent logins
 
-// Passport local strategy
+// Local Strategy
 passport.use(new LocalStrategy(
   function verify(username, password, cb) {
     db.getUsernamePassword(username, password, cb)}
 ));
 
-// Stores username
+// Store encrypted username and id
 passport.serializeUser((user, done) => {
-  // console.log(user);
   done(null, user);
 });
+// Retreive encryped username and id
 passport.deserializeUser((rows, done) => {
-  // console.log(`deserialized user ${rows.user}`);
   done(null, rows);
 });
 
 
 // ROUTES
-// user routes
+// ACCOUNT ROUTE
 app.post('/account/register', db.createUser);
 
-app.post(
-  '/account/login', 
-  passport.authenticate('local', {
-    successRedirect: '/account/',
-    failureRedirect: '/account/login'
-  })
+// login using Local Strategy
+app.post('/account/login', 
+  passport.authenticate(
+    'local', 
+    {failureMessage: true}),
+    (req, res) => {
+      res.redirect('/account');
+    }
 );
 
 app.post('/account/logout', (req, res, next) => {
     req.logout((err) => {
       if(err) {return next(err)}
-      res.redirect('/account/login');
+      res.redirect('/account');
     });
-    
   }
 );
 
@@ -77,12 +78,17 @@ app.delete('/product/:id', db.deleteProduct);
 
 // order routes
 app.get('/account/order', db.getUserOrders);
-app.post('/account/order/', db.createNewOrder);
 app.get('/account/order/:orderId', db.getOrder);
-app.delete('/account/order/:orderId', db.deleteOrder);
-app.put('/account/order/add/:orderId', db.addOrderProduct);
-app.put('/account/order/edit/:orderId', db.editOrderQty);
-app.put('/account/order/checkout/:orderId', db.checkoutOrder);
+
+// basket routes
+app.get('/account/basket', db.getUserBaskets);
+app.post('/account/basket/', db.createNewBasket);
+app.get('/account/basket/:basketId', db.getBasket);
+app.put('/account/basket/add/:basketId', db.addProductToBasket);
+app.put('/account/basket/edit/:basketId', db.editProductQty);
+app.delete('/account/basket/:basketId', db.deleteBasket);
+
+app.put('/account/basket/checkout/:basketId', db.checkout);
 
 
 app.listen(port, () => {

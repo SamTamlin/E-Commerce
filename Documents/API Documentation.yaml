@@ -1,0 +1,744 @@
+openapi: 3.0.1
+
+info:
+  title: E-Commerce
+  version: 1.0.0
+  description: "A Codecadamy project: E-Commerce App (REST API)"
+
+paths:
+  /account/register:
+    post:
+      summary: Create a new user account
+      description: >-
+        Creates a new user account requiring an email, password, first and last name.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: ausername
+                email:
+                  type: string
+                  example: random@email.com
+                first_name: 
+                  type: string
+                  example: John
+                last_name:
+                  type: string
+                  example: Smith
+      operationId: create_user_account
+      responses:
+        201:
+          description: 201 Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 11
+                  username:
+                    type: string
+                    example: ausername
+                  email:
+                    type: string
+                    example: random@email.com
+                  first_name:
+                    type: string
+                    example: John
+                  last_name:
+                    type: string
+                    example: Smith
+                  password':
+                    type: string
+                    example: 'Id2OLpArBbpb'
+  /account/login:
+    post:
+      summary: Login to a user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: ausername
+                password:
+                  type: string
+                  example: Id2OLpArBbpb
+      operationId: log_in
+      responses:
+        200:
+          description: 200 Success - Redirects to /account/
+        409:
+          description: 409 Conflict
+          content:
+            string:
+              schema:
+                type: string
+                example: 'The username ausername already exists, please login'
+  /account:
+    get:
+      summary: Retreive account information
+      operationId: get_account_info
+      responses:
+        200:
+          description: The corrisponding user object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 11
+                  username:
+                    type: string
+                    example: ausername
+                  email:
+                    type: string
+                    example: random@email.com
+                  first_name:
+                    type: string
+                    example: John Smith
+                  last_name:
+                    type: string
+                    example: Smith
+        401:
+          description: 401 Unauthorized
+          content:
+            string:
+              schema:
+                type: string
+                example: 'Unauthorized: Please log in to view your account information'
+    put:
+      summary: Edit account details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: random@email.com
+                first_name:
+                  type: string
+                  example: Jane
+                last_name:
+                  type: string
+                  example: Doe
+                password:
+                  type: string
+                  example: Id2OLpArBbpb
+      operationId: edit_account_info
+      responses:
+        200:
+          description: The corrisponding user object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 11
+                  username:
+                    type: string
+                    example: ausername
+                  email:
+                    type: string
+                    example: random@email.com
+                  first_name:
+                    type: string
+                    example: Jane
+                  last_name:
+                    type: string
+                    example: Doe
+        401:
+          description: 401 Unauthorized
+          content:
+            string:
+              schema:
+                type: string
+                example: 'Unauthorized: Please log in to edit your account information'
+    delete:
+      summary: Delete account
+      operationId: delete_account
+      responses:
+        204:
+          description: 204 No content - Redirected to /account/login
+        401:
+          description: 401 Unauthorized
+          content:
+            string:
+              schema:
+                type: string
+                example: 'Unauthorized: You must be logged in to delete your account!'
+  /product:
+    get:
+      summary: Retreive full list of products
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayOfProducts'
+    post:
+      summary: Create a new product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Lemonade
+                price: 
+                  type: integer
+                  example: 1.29
+      operationId: 'create_product'
+      responses:
+        201:
+          description: 201 Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 41
+                  name:
+                    type: string
+                    example: Lemonade
+                  price: 
+                    type: integer
+                    example: 1.29
+  /product/{id}:
+    get:
+      summary: Retreive product information 
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 22
+      operationId: 'get_product_info'
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 22
+                  name:
+                    type: string
+                    example: Cheese - Gouda
+                  price:
+                    type: number
+                    example: 2.43
+        404:
+          description: 404 Not Found
+    put:
+      summary: Edit product name or price
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 22
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Cream Soda
+                price: 
+                  type: integer
+                  example: 1.09
+      operationId: 'edit_product_info'
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 22
+                  name:
+                    type: string
+                    example: Cream Soda
+                  price:
+                    type: integer
+                    example: 1.09
+    delete:
+      summary: Delete product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 22
+      operationId: 'delete_product'
+      responses:
+        204:
+          description: 204 No Content
+  /account/order:
+    get:
+      summary: Retreive list of orders/baskets by user
+      description: Retreives a list of orders made by the user. If 'payment_received' = false the order is considered to be in the basket.
+      operationId: 'get_all_orders'
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayOfOrders'
+    post:
+      summary: Create a new basket
+      description: 'Must be logged in to create a basket'
+      operationId: 'create_order'
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order_id:
+                    type: integer
+                    example: 51
+                  transaction_complete:
+                    type: boolean
+                    example: false
+  /account/order/{order_id}:
+    get:
+      summary: Retrive details of a single order by item ordered by product_id
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 12
+      operationId: get_single_order
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayOfOrderItems'
+    delete:
+      summary: Delete basket
+      description: Only baskets and not orders can be removed, if payment has been received deletion is rejected
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 16        
+      operationId: delete_order
+      responses:
+        204:
+          description: 204 No Content
+  /account/order/add/{order_id}:
+    put:
+      summary: Add product to basket
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 12
+      requestBody:
+        description: Adding two "Cream - Soda" to order 16.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                product_id:
+                  type: integer
+                  example: 22
+                quantity:
+                  type: integer
+                  example: 2
+      operationId: add_to_order
+      responses:
+        200:
+          description: 200 OK - Redirected to /account/order/{order_id}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayOfOrderItemsProductAdded'
+  /account/order/edit/{order_id}:
+    put:
+      summary: Edit product quantity in a basket
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 12
+      requestBody:
+        description: Change quantity of "Cream - Soda" from 2 to 1.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                product_id:
+                  type: integer
+                  example: 22
+                quantity: 
+                  type: integer
+                  example: 1
+      operationId: edit_order_quantity
+      responses:
+        200:
+          description: 200 OK - Redirected to /account/order/{order_id}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayOfOrderItemsQuantityChanged'
+  /account/order/checkout/{order_id}:
+    put:
+      summary: Checkout - Payment received, basket turned into order.
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 12
+      operationId: checkout_basket
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order_id:
+                    type: integer
+                    example: 12
+                  transaction_complete:
+                    type: boolean
+                    example: true
+components:
+  schemas:
+    ArrayOfProducts:
+      type: array
+      items:
+        type: object
+      example:
+        - id: 1
+          name: Turnip - White, Organic
+          price: 0.87
+        - id: 2
+          name: Cake - Miini Cheesecake Cherry
+          price: 4.94
+        - id: 3
+          name: Broccoli - Fresh
+          price: 1.18
+        - id: 4
+          name: Mushrooms - Black, Dried
+          price: 2.73
+        - id: 5
+          name: Muffin - Blueberry Individual
+          price: 0.98
+        - id: 6
+          name: Cheese - Gouda Smoked
+          price: 3.92
+        - id: 7
+          name: Mousse - Mango
+          price: 1.00
+        - id: 8
+          name: Pork - Ham Hocks - Smoked
+          price: 2.63
+        - id: 9
+          name: Cookies Cereal Nut
+          price: 0.97
+        - id: 10
+          name: Clams - Canned
+          price: 3.16
+        - id: 11
+          name: Rice - Brown
+          price: 2.46
+        - id: 12
+          name: Temperature Recording Station
+          price: 2.36
+        - id: 13
+          name: Tea - Jasmin Green
+          price: 2.82
+        - id: 14
+          name: Cheese - Marble
+          price: 4.27
+        - id: 15
+          name: Wine - Magnotta - Cab Sauv
+          price: 2.93
+        - id: 16
+          name: Lid - Translucent, 3.5 And 6 Oz
+          price: 4.87
+        - id: 17
+          name: Artichokes - Knobless, White
+          price: 1.94
+        - id: 18
+          name: Table Cloth 53x53 White
+          price: 0.77
+        - id: 19
+          name: Lettuce - Curly Endive
+          price: 1.42
+        - id: 20
+          name: Liqueur - Melon
+          price: 0.08
+        - id: 21
+          name: Ecolab - Hand Soap Form Antibac
+          price: 3.76
+        - id: 22
+          name: Cheese - Gouda
+          price: 2.43
+        - id: 23
+          name: Sobe - Liz Blizz
+          price: 3.97
+        - id: 24
+          name: Mushroom - Morels, Dry
+          price: 2.56
+        - id: 25
+          name: Olive - Spread Tapenade
+          price: 0.82
+        - id: 26
+          name: Chick Peas - Canned
+          price: 3.68
+        - id: 27
+          name: Spring Roll Veg Mini
+          price: 2.84
+        - id: 28
+          name: Wine - Ruffino Chianti Classico
+          price: 4.49
+        - id: 29
+          name: Tart - Lemon
+          price: 1.83
+        - id: 30
+          name: Bulgar
+          price: 1.79
+        - id: 31
+          name: Chick Peas - Canned
+          price: 0.68
+        - id: 32
+          name: Lettuce - Sea / Sea Asparagus
+          price: 3.94
+        - id: 33
+          name: Cheese - Pont Couvert
+          price: 4.38
+        - id: 34
+          name: Muffin Batt - Ban Dream Zero
+          price: 2.61
+        - id: 35
+          name: Placemat - Scallop, White
+          price: 3.33
+        - id: 36
+          name: Turkey - Breast, Boneless Sk On
+          price: 4.21
+        - id: 37
+          name: Flour - Bread
+          price: 0.74
+        - id: 38
+          name: Absolut Citron
+          price: 2.35
+        - id: 39
+          name: Mushroom - Shitake, Fresh
+          price: 4.87
+        - id: 40
+          name: Wine - Sauvignon Blanc Oyster
+          price: 3.41  
+    ArrayOfOrders:
+      type: array
+      items:
+        type: object
+      example:
+        - order_id: 12
+          basket_total: "30.76"
+          payment_received: true
+        - order_id: 31
+          basket_total: "14.96"
+          payment_received: false
+        - order_id: 32
+          basket_total: "4.85"
+          payment_received: true
+        - order_id: 33
+          basket_total: "37.02"
+          payment_received: false
+        - order_id: 39
+          basket_total: "56.83"
+          payment_received: true
+    ArrayOfOrderItems:
+      type: array
+      items:
+        type: object
+      example:
+        - order_id: 12
+          product_id: 10
+          product_name: Clams - Canned
+          price: "3.16"
+          quantity: 3
+          product_total: "9.48"
+          transaction_complete: true
+        - order_id: 12
+          product_id: 24
+          product_name: Mushroom - Morels, Dry
+          price: "2.56"
+          quantity: 5
+          product_total: "12.80"
+          transaction_complete: true
+        - order_id: 12
+          product_id: 35
+          product_name: Placemat - Scallop, White
+          price: "3.33"
+          quantity: 1
+          product_total: "3.33"
+          transaction_complete: true
+        - order_id: 12
+          product_id: 1
+          product_name: Turnip - White, Organic
+          price: "0.87"
+          quantity: 2
+          product_total: "1.74"
+          transaction_complete: true
+        - order_id: 12
+          product_id: 40
+          product_name: Wine - Sauvignon Blanc Oyster
+          price: "3.41"
+          quantity: 1
+          product_total: "3.41"
+          transaction_complete: true
+    ArrayOfOrderItemsProductAdded:
+      type: array
+      items:
+        type: object
+      example:
+        - order_id: 12
+          product_id: 10
+          product_name: Clams - Canned
+          price: "3.16"
+          quantity: 3
+          product_total: "9.48"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 22
+          product_name: Cream - Soda
+          price: "1.09"
+          quantity: 2
+          product_total: "2.18"
+          payment_receieved: false
+        - order_id: 12
+          product_id: 24
+          product_name: Mushroom - Morels, Dry
+          price: "2.56"
+          quantity: 5
+          product_total: "12.80"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 35
+          product_name: Placemat - Scallop, White
+          price: "3.33"
+          quantity: 1
+          product_total: "3.33"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 1
+          product_name: Turnip - White, Organic
+          price: "0.87"
+          quantity: 2
+          product_total: "1.74"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 40
+          product_name: Wine - Sauvignon Blanc Oyster
+          price: "3.41"
+          quantity: 1
+          product_total: "3.41"
+          transaction_complete: false
+    ArrayOfOrderItemsQuantityChanged:
+      type: array
+      items:
+        type: object
+      example:
+        - order_id: 12
+          product_id: 10
+          product_name: Clams - Canned
+          price: "3.16"
+          quantity: 3
+          product_total: "9.48"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 22
+          product_name: Cream - Soda
+          price: "1.09"
+          quantity: 1
+          product_total: "1.09"
+          payment_receieved: false
+        - order_id: 12
+          product_id: 24
+          product_name: Mushroom - Morels, Dry
+          price: "2.56"
+          quantity: 5
+          product_total: "12.80"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 35
+          product_name: Placemat - Scallop, White
+          price: "3.33"
+          quantity: 1
+          product_total: "3.33"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 1
+          product_name: Turnip - White, Organic
+          price: "0.87"
+          quantity: 2
+          product_total: "1.74"
+          transaction_complete: false
+        - order_id: 12
+          product_id: 40
+          product_name: Wine - Sauvignon Blanc Oyster
+          price: "3.41"
+          quantity: 1
+          product_total: "3.41"
+          transaction_complete: false
+
