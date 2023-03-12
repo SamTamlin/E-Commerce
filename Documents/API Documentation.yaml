@@ -20,7 +20,7 @@ paths:
               properties:
                 username:
                   type: string
-                  example: ausername
+                  example: jsmith4
                 email:
                   type: string
                   example: random@email.com
@@ -30,6 +30,9 @@ paths:
                 last_name:
                   type: string
                   example: Smith
+                password:
+                  type: string
+                  example: 5up3rC00lP@55w0rD!
       operationId: create_user_account
       responses:
         201:
@@ -44,7 +47,7 @@ paths:
                     example: 11
                   username:
                     type: string
-                    example: ausername
+                    example: jsmith4
                   email:
                     type: string
                     example: random@email.com
@@ -54,9 +57,14 @@ paths:
                   last_name:
                     type: string
                     example: Smith
-                  password':
-                    type: string
-                    example: 'Id2OLpArBbpb'
+
+        409:
+          description: 409 Conflict
+          content:
+            string:
+              schema:
+                type: string
+                example: Either the username or email already exist, please try again
   /account/login:
     post:
       summary: Login to a user account
@@ -69,14 +77,16 @@ paths:
               properties:
                 username:
                   type: string
-                  example: ausername
+                  example: jsmith4
                 password:
                   type: string
-                  example: Id2OLpArBbpb
+                  example: 5up3rC00lP@55w0rD!
       operationId: log_in
       responses:
         200:
           description: 200 Success - Redirects to /account/
+        401:
+          description: 401 Unauthorized
         409:
           description: 409 Conflict
           content:
@@ -84,6 +94,12 @@ paths:
               schema:
                 type: string
                 example: 'The username ausername already exists, please login'
+  /account/logout:
+    post:
+      summary: Logout of user account
+      responses:
+        401:
+          description: 401 Unauthorized - logs user out and redirects to /account
   /account:
     get:
       summary: Retreive account information
@@ -101,13 +117,13 @@ paths:
                     example: 11
                   username:
                     type: string
-                    example: ausername
+                    example: jsmith4
                   email:
                     type: string
                     example: random@email.com
                   first_name:
                     type: string
-                    example: John Smith
+                    example: John
                   last_name:
                     type: string
                     example: Smith
@@ -138,7 +154,7 @@ paths:
                   example: Doe
                 password:
                   type: string
-                  example: Id2OLpArBbpb
+                  example: 5up3rC00lP@55w0rD!
       operationId: edit_account_info
       responses:
         200:
@@ -153,7 +169,7 @@ paths:
                     example: 11
                   username:
                     type: string
-                    example: ausername
+                    example: jsmith4
                   email:
                     type: string
                     example: random@email.com
@@ -170,12 +186,19 @@ paths:
               schema:
                 type: string
                 example: 'Unauthorized: Please log in to edit your account information'
+        404:
+          description: 404 Not Found
+          content:
+            string:
+              schema:
+                type: string
+                example: User not found
     delete:
       summary: Delete account
       operationId: delete_account
       responses:
         204:
-          description: 204 No content - Redirected to /account/login
+          description: 204 No content
         401:
           description: 401 Unauthorized
           content:
@@ -235,7 +258,7 @@ paths:
           required: true
           schema:
             type: integer
-          example: 22
+          example: 1
       operationId: 'get_product_info'
       responses:
         200:
@@ -247,15 +270,20 @@ paths:
                 properties:
                   id:
                     type: integer
-                    example: 22
+                    example: 1
                   name:
                     type: string
-                    example: Cheese - Gouda
+                    example: Turnip - White, Organic
                   price:
                     type: number
-                    example: 2.43
+                    example: 0.87
         404:
           description: 404 Not Found
+          content:
+            string:
+              schema:
+                type: string
+                example: Product with an id of 42 does not exist.
     put:
       summary: Edit product name or price
       parameters:
@@ -264,7 +292,7 @@ paths:
           required: true
           schema:
             type: integer
-          example: 22
+          example: 41
       requestBody:
         required: true
         content:
@@ -289,13 +317,20 @@ paths:
                 properties:
                   id:
                     type: integer
-                    example: 22
+                    example: 41
                   name:
                     type: string
                     example: Cream Soda
                   price:
                     type: integer
                     example: 1.09
+        404:
+          description: 404 Not Found
+          content:
+            string:
+              schema:
+                type: string
+                example: Product with an id of 42 does not exist
     delete:
       summary: Delete product
       parameters:
@@ -311,8 +346,8 @@ paths:
           description: 204 No Content
   /account/order:
     get:
-      summary: Retreive list of orders/baskets by user
-      description: Retreives a list of orders made by the user. If 'payment_received' = false the order is considered to be in the basket.
+      summary: Retreive list of orders by user
+      description: Retreives a list of orders made by the user if they are logged in.
       operationId: 'get_all_orders'
       responses:
         200:
@@ -321,6 +356,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ArrayOfOrders'
+        204:
+          description: 204 No Content
+          content:
+            string:
+              schema:
+                type: string
+                example: There are no orders for account dposten3
+  /account/order/{order_id}:
+    get:
+      summary: Retrive details of a single order by order_id
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 32
+      operationId: get_single_order
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayOfOrderItems'
+        404:
+          description: 404 Not Found
+          content:
+            string:
+              schema:
+                type: string
+                example: 'Order with an id of 1 does not exist on this account.'
+  /account/basket:
+    get:
+      summary: Retreive list of baskets by user
+      description: Retreives a list of baskets made by the user if they are logged in.
+      operationId: 'get_all_baskets'
+      responses:
+        200:
+          description: 200 OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayOfBaskets'
+        204:
+          description: 204 No Content
+          content:
+            string:
+              schema:
+                type: string
+                example: There are no baskets for account dposten3
     post:
       summary: Create a new basket
       description: 'Must be logged in to create a basket'
@@ -336,53 +422,56 @@ paths:
                   order_id:
                     type: integer
                     example: 51
-                  transaction_complete:
-                    type: boolean
-                    example: false
-  /account/order/{order_id}:
+  /account/basket/{basket_id}:
     get:
-      summary: Retrive details of a single order by item ordered by product_id
+      summary: Retrive details of a single basket by basket_id
       parameters:
-        - name: order_id
+        - name: basket_id
           in: path
           required: true
           schema:
             type: integer
             example: 12
-      operationId: get_single_order
+      operationId: get_single_basket
       responses:
         200:
           description: 200 OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ArrayOfOrderItems'
+                $ref: '#/components/schemas/ArrayOfBasketItems'
+        404:
+          description: 404 Not Found
+          content:
+            string:
+              schema:
+                type: string
+                example: 'Basket with an id of 1 does not exist on this account.'
     delete:
       summary: Delete basket
-      description: Only baskets and not orders can be removed, if payment has been received deletion is rejected
       parameters:
-        - name: order_id
+        - name: basket_id
           in: path
           required: true
           schema:
             type: integer
-            example: 16        
+            example: 51       
       operationId: delete_order
       responses:
         204:
           description: 204 No Content
-  /account/order/add/{order_id}:
+  /account/basket/add/{basket_id}:
     put:
       summary: Add product to basket
       parameters:
-        - name: order_id
+        - name: basket_id
           in: path
           required: true
           schema:
             type: integer
             example: 12
       requestBody:
-        description: Adding two "Cream - Soda" to order 16.
+        description: Adding 2 'Cake - Mini Cheesecake Cherry' to the basket with a basket_id of 12.
         required: true
         content:
           application/json:
@@ -391,23 +480,30 @@ paths:
               properties:
                 product_id:
                   type: integer
-                  example: 22
+                  example: 2
                 quantity:
                   type: integer
                   example: 2
       operationId: add_to_order
       responses:
         200:
-          description: 200 OK - Redirected to /account/order/{order_id}
+          description: 200 OK - Redirected to /account/order/12
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ArrayOfOrderItemsProductAdded'
-  /account/order/edit/{order_id}:
+                $ref: '#/components/schemas/ArrayOfBasketItemsProductAdded'
+        409:
+          description: 409 Conflict
+          content:
+            string:
+              schema:
+                type: string
+                example: Product_id 2 already exists in basketId 12, no change has been made
+  /account/basket/edit/{basket_id}:
     put:
       summary: Edit product quantity in a basket
       parameters:
-        - name: order_id
+        - name: basket_id
           in: path
           required: true
           schema:
@@ -434,8 +530,29 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ArrayOfOrderItemsQuantityChanged'
-  /account/order/checkout/{order_id}:
+                $ref: '#/components/schemas/ArrayOfBasketItemsQuantityChanged'
+        409:
+          description: 404 Not Found
+          content:
+            string:
+              schema:
+                type: string
+                example: Product_id 2 does not exist in basketId 12, no change has been made
+  /account/basket/delete/{basket_id}:
+    delete:
+      summary: Delete item in basket
+      parameters:
+        - name: basket_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 2      
+      operationId: delete_basket_product
+      responses:
+        204:
+          description: 204 No Content
+  /account/basket/checkout/{order_id}:
     put:
       summary: Checkout - Payment received, basket turned into order.
       parameters:
@@ -450,16 +567,17 @@ paths:
         200:
           description: 200 OK
           content:
-            application/json:
+            string:
               schema:
-                type: object
-                properties:
-                  order_id:
-                    type: integer
-                    example: 12
-                  transaction_complete:
-                    type: boolean
-                    example: true
+                type: string
+                example: Order is being processed
+        404:
+          description: 404 Not Found
+          content:
+            string:
+              schema:
+                type: string
+                example: basket_id 12 does not exist for user msimmank0.
 components:
   schemas:
     ArrayOfProducts:
@@ -592,62 +710,92 @@ components:
       items:
         type: object
       example:
-        - order_id: 12
-          basket_total: "30.76"
-          payment_received: true
-        - order_id: 31
-          basket_total: "14.96"
-          payment_received: false
         - order_id: 32
           basket_total: "4.85"
-          payment_received: true
-        - order_id: 33
-          basket_total: "37.02"
-          payment_received: false
         - order_id: 39
           basket_total: "56.83"
-          payment_received: true
     ArrayOfOrderItems:
       type: array
       items:
         type: object
       example:
+        - order_id: 39
+          product_id: 26
+          product_name: Chick Peas - Canned
+          price: "3.68"
+          quantity: 3
+          product_total: "11.04"
+        - order_id: 39
+          product_id: 31
+          product_name: Chick Peas - Canned
+          price: "0.68"
+          quantity: 5
+          product_total: "3.40"
+        - order_id: 39
+          product_id: 39
+          product_name: Mushroom - Shitake, Fresh
+          price: "4.87"
+          quantity: 4
+          product_total: "19.48"
+        - order_id: 39
+          product_id: 15
+          product_name: Wine - Magnotta - Cab Sauv
+          price: "2.93"
+          quantity: 2
+          product_total: "5.86"
+        - order_id: 39
+          product_id: 40
+          product_name: Wine - Sauvignon Blanc Oyster
+          price: "3.41"
+          quantity: 5
+          product_total: "17.05"
+    ArrayOfBaskets:
+      type: array
+      items:
+        type: object
+      example:
         - order_id: 12
+          basket_total: "30.76"
+        - order_id: 31
+          basket_total: "14.96"
+        - order_id: 33
+          basket_total: "37.02"
+    ArrayOfBasketItems:
+      type: array
+      items:
+        type: object
+      example:
+        - basket_id: 12
+          product_id: 1
+          product_name: Turnip - White Organic
+          price: "0.87"
+          quantity: 2
+          product_total: "1.74"
+        - basket_id: 12
           product_id: 10
           product_name: Clams - Canned
           price: "3.16"
           quantity: 3
           product_total: "9.48"
-          transaction_complete: true
-        - order_id: 12
+        - basket_id: 12
           product_id: 24
           product_name: Mushroom - Morels, Dry
           price: "2.56"
           quantity: 5
           product_total: "12.80"
-          transaction_complete: true
-        - order_id: 12
+        - basket_id: 12
           product_id: 35
-          product_name: Placemat - Scallop, White
+          product_name: Placemant - Scallop, White
           price: "3.33"
           quantity: 1
           product_total: "3.33"
-          transaction_complete: true
-        - order_id: 12
-          product_id: 1
-          product_name: Turnip - White, Organic
-          price: "0.87"
-          quantity: 2
-          product_total: "1.74"
-          transaction_complete: true
-        - order_id: 12
+        - basket_id: 12
           product_id: 40
           product_name: Wine - Sauvignon Blanc Oyster
           price: "3.41"
           quantity: 1
           product_total: "3.41"
-          transaction_complete: true
-    ArrayOfOrderItemsProductAdded:
+    ArrayOfBasketItemsProductAdded:
       type: array
       items:
         type: object
@@ -660,11 +808,11 @@ components:
           product_total: "9.48"
           transaction_complete: false
         - order_id: 12
-          product_id: 22
-          product_name: Cream - Soda
-          price: "1.09"
+          product_id: 2
+          product_name: Cake- Mini Cheesecase Cherry
+          price: "4.94"
           quantity: 2
-          product_total: "2.18"
+          product_total: "9.88"
           payment_receieved: false
         - order_id: 12
           product_id: 24
@@ -694,51 +842,44 @@ components:
           quantity: 1
           product_total: "3.41"
           transaction_complete: false
-    ArrayOfOrderItemsQuantityChanged:
+    ArrayOfBasketItemsQuantityChanged:
       type: array
       items:
         type: object
       example:
-        - order_id: 12
+        - basket_id: 12
           product_id: 10
           product_name: Clams - Canned
           price: "3.16"
           quantity: 3
           product_total: "9.48"
-          transaction_complete: false
-        - order_id: 12
-          product_id: 22
-          product_name: Cream - Soda
-          price: "1.09"
+        - basket_id: 2
+          product_id: 2
+          product_name: Cake - Mini Cheesecake Cherry
+          price: "4.94"
           quantity: 1
-          product_total: "1.09"
-          payment_receieved: false
-        - order_id: 12
+          product_total: "4.94"
+        - basket_id: 12
           product_id: 24
           product_name: Mushroom - Morels, Dry
           price: "2.56"
           quantity: 5
           product_total: "12.80"
-          transaction_complete: false
-        - order_id: 12
+        - basket_id: 12
           product_id: 35
           product_name: Placemat - Scallop, White
           price: "3.33"
           quantity: 1
           product_total: "3.33"
-          transaction_complete: false
-        - order_id: 12
+        - basket_id: 12
           product_id: 1
           product_name: Turnip - White, Organic
           price: "0.87"
           quantity: 2
           product_total: "1.74"
-          transaction_complete: false
-        - order_id: 12
+        - basket_id: 12
           product_id: 40
           product_name: Wine - Sauvignon Blanc Oyster
           price: "3.41"
           quantity: 1
           product_total: "3.41"
-          transaction_complete: false
-

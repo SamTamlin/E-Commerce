@@ -76,7 +76,7 @@ const getUsernamePassword = (username, password, done) => {
 
 const getUser = (req, res) => {
     if(typeof req.session.passport == 'undefined') {
-        res.status(401).send('Unauthorized: Please log in to view your account information')
+        res.status(401).send('Unauthorized: Please log in to view your account information');
     } 
     else {
         const {username} = req.session.passport.user;
@@ -99,7 +99,7 @@ const getUser = (req, res) => {
 
 const updateUser = async (req, res) => {
     if(typeof req.session.passport == 'undefined') {
-        res.status(401).send('Unauthorized: Please log in to edit your account information')
+        res.status(401).send('Unauthorized: Please log in to edit your account information');
     } else {
         const {username} = req.session.passport.user;
         const {email, first_name, last_name, password} = req.body;
@@ -129,7 +129,7 @@ const updateUser = async (req, res) => {
 
 const deleteUser = (req, res) => {
     if(typeof req.session.passport == 'undefined') {
-        res.status(401).send('Unauthorized: You must be logged in to delete your account!')
+        res.status(401).send('Unauthorized: You must be logged in to delete your account!');
     } else {
         const {username} = req.session.passport.user;
         pool.query(
@@ -208,7 +208,7 @@ const updateProduct = (req, res) => {
                 console.log(error);
                 res.status(500).send('Internal server error');
             } else if (typeof results.rows == 'undefined' || results.rows.length < 1) {
-                res.status(404).send('Product not found');
+                res.status(404).send(`Product with an id of ${id} does not exist`);
             } else {
                 res.status(200).json(results.rows[0]);
             }
@@ -258,7 +258,7 @@ const getUserOrders = (req, res) => {
                     console.log(error);
                     res.status(500).send('Internal server error');
                 } else if(results.rows.length < 1) {
-                    res.status(204).send('No Content');
+                    res.status(204).send(`There are no orders for account ${username}`);
                 } else {
                     res.status(200).json(results.rows);
                 }
@@ -339,7 +339,7 @@ const getUserBaskets = (req, res) => {
                     console.log(error);
                     res.status(500).send('Internal server error');
                 } else if(results.rows.length < 1) {
-                    res.status(204).send('No Content');
+                    res.status(204).send(`There are no baskets for account ${username}`);
                 } else {
                     res.status(200).json(results.rows);
                 }
@@ -417,60 +417,6 @@ const getBasket = (req, res) => {
     }
 };
 
-const addProductToBasket = (req, res) => {
-    if(typeof req.session.passport == 'undefined') {
-        res.status(401).send('Unauthorized: You must be logged in to edit a basket.');
-    } else {
-        const {basketId} = req.params;
-        const {product_id, quantity} = req.body;
-        pool.query(
-            'INSERT INTO product_basket(customer_basket_id, product_id, quantity)\
-            VALUES($1, $2, $3)\
-            ON CONFLICT (customer_basket_id, product_id) DO NOTHING;',
-            [basketId, product_id, quantity],
-            (error, results) => {
-                if(error) {
-                    console.log(error);
-                    res.status(500).send('Internal server error');
-                } else if(results.rows < 1) {
-                    res.status(409).send(
-                        `Product_id ${product_id} already exists in basketId ${basketId},\
-                         no change has been made`);
-                } else {
-                    res.status(200).redirect(`/account/basket/${basketId}`);
-                }
-            }
-        )
-    }
-};
-
-const editProductQty = (req, res) => {
-    if(typeof req.session.passport == 'undefined') {
-        res.status(401).send('Unauthorized: You must be logged in to edit a basket.');
-    } else {
-        const {basketId} = req.params;
-        const {product_id, quantity} = req.body;
-        pool.query(
-            'UPDATE product_basket\
-            SET quantity = $1\
-            WHERE customer_basket_id = $2 AND product_id = $3',
-            [quantity, basketId, product_id],
-            (error, results) => {
-                if(error) {
-                    console.log(error);
-                    res.status(500).send('Internal server error');
-                } else if(results.rows < 1) {
-                    res.status(409).send(
-                        `Product_id ${product_id} does not exist in basketId ${basketId},\
-                         no change has been made`);
-                } else {
-                    res.status(200).redirect(`/account/basket/${basketId}`);
-                }
-            }
-        )
-    }
-};
-
 const deleteBasket = (req, res) => {
     if(typeof req.session.passport == 'undefined') {
         res.status(401).send('Unauthorized: You must be logged in to delete a basket.');
@@ -493,6 +439,83 @@ const deleteBasket = (req, res) => {
     }
 };
 
+const addProductToBasket = (req, res) => {
+    if(typeof req.session.passport == 'undefined') {
+        res.status(401).send('Unauthorized: You must be logged in to edit a basket.');
+    } else {
+        const {basketId} = req.params;
+        const {product_id, quantity} = req.body;
+        pool.query(
+            'INSERT INTO product_basket(customer_basket_id, product_id, quantity)\
+            VALUES($1, $2, $3)\
+            ON CONFLICT (customer_basket_id, product_id) DO NOTHING RETURNING *;',
+            [basketId, product_id, quantity],
+            (error, results) => {
+                if(error) {
+                    console.log(error);
+                    res.status(500).send('Internal server error');
+                } else if(results.rows < 1) {
+                    res.status(404).send(
+                        `Product_id ${product_id} already exists in basketId ${basketId},\
+                         no change has been made`);
+                } else {
+                    res.status(200).redirect(`/account/basket/${basketId}`);
+                }
+            }
+        )
+    }
+};
+
+const editProductQty = (req, res) => {
+    if(typeof req.session.passport == 'undefined') {
+        res.status(401).send('Unauthorized: You must be logged in to edit a basket.');
+    } else {
+        const {basketId} = req.params;
+        const {product_id, quantity} = req.body;
+        pool.query(
+            'UPDATE product_basket\
+            SET quantity = $1\
+            WHERE customer_basket_id = $2 AND product_id = $3\
+            RETURNING *',
+            [quantity, basketId, product_id],
+            (error, results) => {
+                if(error) {
+                    console.log(error);
+                    res.status(500).send('Internal server error');
+                } else if(results.rows < 1) {
+                    res.status(404).send(
+                        `Product_id ${product_id} does not exist in basketId ${basketId},\
+                         no change has been made`);
+                } else {
+                    res.status(200).redirect(`/account/basket/${basketId}`);
+                }
+            }
+        )
+    }
+};
+
+const deleteProductFromBasket = (req, res) => {
+    if(typeof req.session.passport == 'undefined') {
+        res.status(401).send('Unauthorized: You must be logged in to delete an item from a basket.');
+    } else {
+        const {id} = req.session.passport.user;
+        const {basketId} = req.params;
+        const {product_id} = req.body
+        pool.query(
+            'DELETE FROM product_basket\
+            WHERE customer_basket_id = $1 AND product_id = $2;',
+            [basketId, product_id],
+            (error, results) => {
+                if(error) {
+                    console.log(error);
+                    res.status(500).send('Internal server error');
+                }
+                res.status(204).send('No content');
+            }
+        )
+    }
+}
+
 const checkout = async (req, res) => {
     if(typeof req.session.passport == 'undefined') {
         res.status(401).send('Unauthorized: You must be logged in to checkout.');
@@ -501,6 +524,7 @@ const checkout = async (req, res) => {
         const client = await pool.connect();
         const {id, username} = req.session.passport.user;
         const {basketId} = req.params;
+        let order_processed = false;
         try {
             // Begin the transaction
             await client.query('BEGIN');
@@ -513,7 +537,7 @@ const checkout = async (req, res) => {
                     ON customer_basket.id = product_basket.customer_basket_id\
                 WHERE customer_basket.id = $1 AND user_account_id = $2';
             const customerBasketResult = await client.query(customerBasketSelectText, [basketId, id]);
-
+            console.log(customerBasketResult);
             if(customerBasketResult.rows.length >= 1) {
                 // Copy contents of customer_basket into customer_order
                 const customerOrderQueryText = 
@@ -542,6 +566,7 @@ const checkout = async (req, res) => {
                 await client.query(customerBasketQueryText, [basketId]);
 
                 // Commit the transaction
+                order_processed = true;
                 await client.query('COMMIT');
             }
         }
@@ -553,10 +578,8 @@ const checkout = async (req, res) => {
         } finally {
             // Disconnect from client
             client.release()
-            if(typeof customerBasketResult == 'undefined') {
+            if(!order_processed) {
                 res.status(404).send(`basket_id ${basketId} does not exist for user ${username}.`);
-            } else if(customerBasketResult.rows.length < 1) {
-                res.status(304).send('Not modified');
             } else {
                res.status(200).send('Order is being processed');
             }
@@ -589,5 +612,6 @@ module.exports = {
     deleteBasket,
     addProductToBasket,
     editProductQty,
+    deleteProductFromBasket,
     checkout,
 };

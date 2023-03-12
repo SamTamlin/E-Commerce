@@ -82,11 +82,12 @@ app.get('/account/order/:orderId', db.getOrder);
 
 // basket routes
 app.get('/account/basket', db.getUserBaskets);
-app.post('/account/basket/', db.createNewBasket);
+app.post('/account/basket', db.createNewBasket);
 app.get('/account/basket/:basketId', db.getBasket);
+app.delete('/account/basket/:basketId', db.deleteBasket);
 app.put('/account/basket/add/:basketId', db.addProductToBasket);
 app.put('/account/basket/edit/:basketId', db.editProductQty);
-app.delete('/account/basket/:basketId', db.deleteBasket);
+app.delete('/account/basket/delete/:basketId', db.deleteProductFromBasket);
 
 app.put('/account/basket/checkout/:basketId', db.checkout);
 
