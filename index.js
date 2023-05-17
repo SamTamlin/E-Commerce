@@ -95,3 +95,5 @@ app.put('/account/basket/checkout/:basketId', db.checkout);
 app.listen(port, () => {
     console.log(`E-Commerce app listening on port ${port}`)
 });
+
+module.exports = app;
